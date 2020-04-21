@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.biubiu.mybatismapper.mapper.UserMapper">
+
+    <select id="getUserByTel" resultType="com.biubiu.mybatismapper.entity.User"
+            parameterType="java.lang.String">
+		select
+			*
+		 from tb_users t
+		 where t.tel = #{tel}
+	</select>
+
+    <update id="deleteByIds" parameterType="integer">
+        update tb_users t
+        <set>
+            t.valid = 0
+        </set>
+        where t.id in
+        <foreach collection="array" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

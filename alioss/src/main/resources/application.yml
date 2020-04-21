@@ -1,0 +1,18 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  thymeleaf:
+    #关闭thymeleaf的缓存，不然在开发过程中修改页面不会立刻生效需要重启，生产可配置为true
+    prefix: classpath:/web/
+    cache: false
+    suffix: .html
+aliyun:
+  oss:
+    bucket-name: my-blog-to-use
+    endpoint: oss-cn-beijing.aliyuncs.com
+    access-key-id: 替换为你的key id
+    #阿里云主账号AccessKey拥有所有API的访问权限，风险很高。建议创建并使用RAM账号进行API访问或日常运维，请登录 https://ram.console.aliyun.com 创建RAM账号。
+    access-key-secret: 替换为你的key secret
+    file-host: test
