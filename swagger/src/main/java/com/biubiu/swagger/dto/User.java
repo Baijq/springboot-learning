@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * User
@@ -13,6 +16,9 @@ import io.swagger.annotations.ApiModelProperty;
 //实体类与json互转的时候 属性值为null的不参与序列化
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiModel(value = "User", description = "用户实体类")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @ApiModelProperty(value = "用户Id", example = "0c7b6416-baf0-4dba-b98b-95186c739e56", dataType = "String")
