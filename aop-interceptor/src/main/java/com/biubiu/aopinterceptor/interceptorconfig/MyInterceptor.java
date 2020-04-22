@@ -17,9 +17,12 @@ public class MyInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        request.setAttribute("startTime", System.currentTimeMillis());
-        request.setAttribute("clientIp", HttpHelper.getClientIp(request));
-        request.setAttribute("machine", HttpHelper.getMachine());
+        System.out.println("startTime: " + System.currentTimeMillis());
+        System.out.println("clientIp: " + HttpHelper.getClientIp(request));
+        System.out.println("machine: " + HttpHelper.getMachine());
+        System.out.println("浏览器名称：" + HttpHelper.getBrowserName(request));
+        System.out.println("浏览器版本：" + HttpHelper.getBrowserVersion(request));
+        System.out.println("操作系统名称：" + HttpHelper.getOsName(request));
         //return false会拦截住
         System.out.println("----------------MyInterceptor 处理完毕 ---------------");
 

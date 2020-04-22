@@ -17,6 +17,7 @@ public class AopInterceptorController {
     @GetMapping("/hello")
     public Map<String, Object> hello() {
         //这里返回一个空的map，拦截器会做处理
+        System.out.println("AopInterceptorController -------  处理请求中...");
         return new HashMap<>();
     }
 }

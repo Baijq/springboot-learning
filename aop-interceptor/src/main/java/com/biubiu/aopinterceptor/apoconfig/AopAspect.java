@@ -26,15 +26,17 @@ public class AopAspect {
 
     /**
      * 方法执行之前
+     *
      * @param joinPoint
      */
     @Before("log()")
     public void doBefore(JoinPoint joinPoint) {
-        System.out.println("---------------Aop -> doBefore-------------");
+        System.out.println("---------------Aop -> doBefore 处理完毕-------------");
     }
 
     /**
      * 方法执行之后
+     *
      * @param
      */
     @After("log()")
