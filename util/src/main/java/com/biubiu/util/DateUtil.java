@@ -20,10 +20,6 @@ public class DateUtil {
         return dtf2.format(now);
     }
 
-    public static void main(String[] args) {
-        System.out.println(getCurrentFormatDateStr(null));
-    }
-
     /**
      * 获取当前时间的字符串，可以指定格式
      * @param format  yyyy-MM-dd HH:mm:ss.SSS
