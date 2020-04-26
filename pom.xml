@@ -18,6 +18,8 @@
         <module>alioss</module>
         <module>mybatis-mapper</module>
         <module>aop-interceptor</module>
+        <module>filter</module>
+        <module>springmvc</module>
     </modules>
 
 </project>
