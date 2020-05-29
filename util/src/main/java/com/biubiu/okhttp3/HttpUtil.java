@@ -126,7 +126,7 @@ public class HttpUtil {
         OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Content-Type", "application/json")
+                .addHeader("Content-Type", "application/json;charset=UTF-8")
                 .get()
                 .build();
         Response response = okHttpClient.newCall(request).execute();
