@@ -44,7 +44,11 @@ public class ParamUtils {
         map.put("name", "张三");
         map.put("password", "1234556");
         map.put("age", "20");
+        map.put("sex", "男");
         System.out.println(getUrlParamsByMap(map));
 
+        List<String> list = new ArrayList<>(map.keySet());
+        List<String> strings = list.subList(0, 3);
+        System.out.println(strings.size());
     }
 }
