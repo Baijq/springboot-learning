@@ -1,9 +1,5 @@
 package com.biubiu.httpclientutil;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -15,9 +11,9 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLContext;
@@ -25,162 +21,211 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
- * TODO
+ * HttpClientUtil
  *
  * @author wbbaijq
  */
 public class HttpClientUtil {
 
-    private HttpClientUtil() {
-    }
-
-    public static String doGet(String url) {
-        return doGet(url, null);
+    /**
+     * 发送GET请求
+     * @param path url
+     * @return string
+     */
+    public static String doGet(String path) {
+        return doGet(path, null);
     }
 
     /**
-     * Get请求，带参数
-     *
-     * @param url
-     * @param param
-     * @return
+     * 发送GET请求
+     * @param path url
+     * @param param 参数
+     * @return string
      */
-    public static String doGet(String url, Map<String, String> param) {
+    public static String doGet (String path, Map<String, String> param) {
+        return doGet(path, param, null);
+    }
 
-        // 创建Httpclient对象
-        CloseableHttpClient httpclient = getCloseableHttpsClients();
-
-        String resultString = "";
+    /**
+     * 发送GET请求
+     * @param path url
+     * @param param 参数
+     * @param headers header
+     * @return string
+     */
+    public static String doGet(String path, Map<String, String> param, Map<String, String> headers) {
+        HttpGet httpGet = null;
         CloseableHttpResponse response = null;
+        CloseableHttpClient httpClient = wrapClient(path);
+        // 创建uri
+        URIBuilder builder = null;
         try {
-            // 创建uri
-            URIBuilder builder = new URIBuilder(url);
+            builder = new URIBuilder(path);
             if (param != null) {
                 for (String key : param.keySet()) {
                     builder.addParameter(key, param.get(key));
                 }
             }
             URI uri = builder.build();
-
             // 创建http GET请求
-            HttpGet httpGet = new HttpGet(uri);
+            httpGet = new HttpGet(uri);
+            if (headers != null && headers.size() > 0) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    httpGet.addHeader(entry.getKey(), entry.getValue());
+                }
+            }
 
             // 执行请求
-            response = httpclient.execute(httpGet);
+            response = httpClient.execute(httpGet);
             // 判断返回状态是否为200
             if (response.getStatusLine().getStatusCode() == 200) {
-                resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
+                return EntityUtils.toString(response.getEntity(), "UTF-8");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("[发送Get请求错误：]" + e.getMessage());
         } finally {
             try {
-                if (response != null) {
-                    response.close();
+                httpGet.releaseConnection();
+                response.close();
+                if (httpClient != null) {
+                    httpClient.close();
                 }
-                httpclient.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        return resultString;
+        return null;
     }
 
-    public static String doPost(String url, Map<String, Object> param) {
-        // 创建Httpclient对象
-        CloseableHttpClient httpClient = getCloseableHttpsClients();
+    /**
+     * post
+     * @param url
+     * @param jsonParam
+     * @return
+     */
+    public static String doPostJson(String url, String jsonParam) {
+        return doPostJson(url, jsonParam, null);
+    }
+
+    /**
+     * post请求
+     * @param url
+     * @param jsonParam
+     * @param headers
+     * @return string
+     */
+    public static String doPostJson(String url, String jsonParam, Map<String, String> headers) {
+        HttpPost httpPost = null;
         CloseableHttpResponse response = null;
-        String resultString = "";
+        CloseableHttpClient httpClient = wrapClient(url);
         try {
-            // 创建Http Post请求
-            HttpPost httpPost = new HttpPost(url);
-            // 创建参数列表
-            if (param != null) {
-                List<NameValuePair> paramList = new ArrayList<>();
-                for (String key : param.keySet()) {
-                    paramList.add(new BasicNameValuePair(key, (String) param.get(key)));
-                }
-                // 模拟表单
-                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList);
-                httpPost.setEntity(entity);
-            }
-            // 执行http请求
-            response = httpClient.execute(httpPost);
-            resultString = EntityUtils.toString(response.getEntity(), "utf-8");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (response != null) {
-                    response.close();
-                }
-                httpClient.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return resultString;
-    }
-
-    public static String doPost(String url) {
-        return doPost(url, null);
-    }
-
-    public static String doPostJson(String url, String json, String tokenHeader, Map<String, String> header) {
-        // 创建Httpclient对象
-        CloseableHttpClient httpClient = getCloseableHttpsClients();
-        CloseableHttpResponse response = null;
-        String resultString = "";
-        try {
-            // 创建Http Post请求
-            HttpPost httpPost = new HttpPost(url);
-            // 创建请求内容
-            httpPost.setHeader("HTTP Method", "POST");
-            httpPost.setHeader("Connection", "Keep-Alive");
-            httpPost.setHeader("Content-Type", "application/json;charset=utf-8");
-            if (!StringUtils.isEmpty(tokenHeader)) {
-                httpPost.setHeader("x-authentication-token", tokenHeader);
-            }
-            if (header != null && header.size() > 0) {
-                for (Map.Entry<String, String> entry : header.entrySet()) {
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    httpPost.addHeader(key, value);
-                }
-            }
-
-            StringEntity entity = new StringEntity(json);
-
-            entity.setContentType("application/json;charset=utf-8");
+            httpPost = new HttpPost(url);
+            //addHeader，如果Header没有定义则添加，已定义则不变，setHeader会重新赋值
+            httpPost.addHeader("Content-type","application/json;charset=utf-8");
+            httpPost.setHeader("Accept", "application/json");
+            StringEntity entity = new StringEntity(jsonParam, StandardCharsets.UTF_8);
+//            entity.setContentType("text/json");
+//            entity.setContentEncoding(new BasicHeader("Content-Type", "application/json;charset=UTF-8"));
             httpPost.setEntity(entity);
-
-            // 执行http请求
-            response = httpClient.execute(httpPost);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
+            //是否有header
+            if (headers != null && headers.size() > 0) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    httpPost.addHeader(entry.getKey(), entry.getValue());
+                }
             }
+            // 执行请求
+            response = httpClient.execute(httpPost);
+            // 判断返回状态是否为200
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return EntityUtils.toString(response.getEntity(), "UTF-8");
+            }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("[发送POST请求错误：]" + e.getMessage());
         } finally {
             try {
-                if (response != null) {
-                    response.close();
+                httpPost.releaseConnection();
+                response.close();
+                if (httpClient != null) {
+                    httpClient.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        return null;
+    }
 
-        return resultString;
+
+    private static CloseableHttpClient wrapClient(String url) {
+        CloseableHttpClient client = HttpClientBuilder.create().build();
+        if (url.startsWith("https")) {
+            client = getCloseableHttpsClients();
+        }
+        return client;
+    }
+
+
+    /**
+     * 获取https协议请求对象
+     */
+    private static CloseableHttpClient getCloseableHttpsClients() {
+        // 采用绕过验证的方式处理https请求
+        SSLContext sslcontext = createIgnoreVerifySSL();
+        // 设置协议http和https对应的处理socket链接工厂的对象
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.INSTANCE)
+                .register("https", new SSLConnectionSocketFactory(sslcontext)).build();
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+        HttpClients.custom().setConnectionManager(connManager);
+        // 创建自定义的httpsclient对象
+        CloseableHttpClient client = HttpClients.custom().setConnectionManager(connManager).build();
+        return client;
+    }
+
+    /**
+     * 获取SSL套接字对象 重点重点：设置tls协议的版本
+     */
+    private static SSLContext createIgnoreVerifySSL() {
+        // 创建套接字对象
+        SSLContext sslContext = null;
+        try {
+            //指定TLS版本
+            sslContext = SSLContext.getInstance("TLSv1.2");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("[创建套接字失败:] " + e.getMessage());
+        }
+        // 实现X509TrustManager接口，用于绕过验证
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                                           String paramString) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                                           String paramString) throws CertificateException {
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        };
+        try {
+            //初始化sslContext对象
+            sslContext.init(null, new TrustManager[]{trustManager}, null);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException("[初始化套接字失败:] " + e.getMessage());
+        }
+        return sslContext;
     }
 
     private static String joinParam(String url, Map<String, Object> params) {
@@ -210,62 +255,4 @@ public class HttpClientUtil {
         return urlBuilder.toString();
     }
 
-    /**
-     * 获取https协议请求对象
-     *
-     * @return
-     */
-    private static CloseableHttpClient getCloseableHttpsClients() {
-        // 采用绕过验证的方式处理https请求
-        SSLContext sslcontext = createIgnoreVerifySSL();
-        // 设置协议http和https对应的处理socket链接工厂的对象
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", PlainConnectionSocketFactory.INSTANCE)
-                .register("https", new SSLConnectionSocketFactory(sslcontext)).build();
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        HttpClients.custom().setConnectionManager(connManager);
-        // 创建自定义的httpsclient对象
-        CloseableHttpClient client = HttpClients.custom().setConnectionManager(connManager).build();
-        return client;
-    }
-
-    /**
-     * 获取SSL套接字对象 重点重点：设置tls协议的版本
-     *
-     * @return
-     */
-    private static SSLContext createIgnoreVerifySSL() {
-        // 创建套接字对象
-        SSLContext sslContext = null;
-        try {
-            //指定TLS版本
-            sslContext = SSLContext.getInstance("TLSv1.2");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        // 实现X509TrustManager接口，用于绕过验证
-        X509TrustManager trustManager = new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
-                                           String paramString) throws CertificateException {
-            }
-
-            @Override
-            public void checkServerTrusted(java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
-                                           String paramString) throws CertificateException {
-            }
-
-            @Override
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-        };
-        try {
-            //初始化sslContext对象
-            sslContext.init(null, new TrustManager[]{trustManager}, null);
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        }
-        return sslContext;
-    }
 }
