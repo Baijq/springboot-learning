@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.biu.myapi.mapper.UserMapper">
+
+    <resultMap id="UserRMap" type="com.biu.myapi.entity.User">
+        <id property="id" column="user_id"/>
+        <result property="username" column="user_name"/>
+        <result property="nickname" column="nick_name"/>
+        <result property="password" column="user_password"/>
+        <result property="mail" column="user_mail"/>
+        <result property="state" column="user_state"/>
+        <result property="reward" column="user_reward"/>
+        <result property="avatar" column="user_avatar"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="all_column">
+        user_id,user_name,nick_name,user_password,user_mail,user_state,user_reward,user_avatar,create_time,update_time
+    </sql>
+
+    <select id="findAll" resultMap="UserRMap">
+        SELECT
+          <include refid="all_column"/>
+        FROM
+          user
+        WHERE user_state = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findById" resultMap="UserRMap" parameterType="integer">
+        SELECT
+          <include refid="all_column"/>
+        FROM
+          user
+        WHERE user_id = #{value}
+        AND user_state = 1
+    </select>
+
+    <select id="find" resultMap="UserRMap" parameterType="com.biu.myapi.entity.User">
+        SELECT
+          <include refid="all_column"/>
+        FROM
+          user
+        <where>
+            <if test="id!=null">
+                user_id = #{id}
+            </if>
+            <if test="username!=null and username != ''">
+                and user_name = #{username}
+            </if>
+            <if test="nickname!=null">
+                and nick_name LIKE concat('%' ,#{nickname}, '%')
+            </if>
+            <if test="mail!=null">
+                and user_mail = #{mail}
+            </if>
+            <choose>
+                <when test="state!=null">and user_state = #{state}</when>
+                <otherwise>and user_state = 1</otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <delete id="delete" parameterType="integer">
+        DELETE FROM user WHERE user_id = #{value}
+    </delete>
+
+    <update id="remove" parameterType="integer">
+        UPDATE user SET user_state = 0 WHERE user_id = #{id}
+    </update>
+
+    <update id="save" parameterType="com.biu.myapi.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (user_id,user_name,nick_name,user_password,user_mail,user_state,user_reward,user_avatar,create_time,update_time)
+        VALUES (null, #{username}, #{nickname}, #{password}, #{mail}, 1, #{reward}, #{avatar}, NOW(), NULL);
+    </update>
+
+    <update id="update" parameterType="com.biu.myapi.entity.User">
+        UPDATE user
+        <set>
+            <if test="username!=null">user_name = #{username},</if>
+            <if test="nickname!=null">nick_name = #{nickname},</if>
+            <if test="password!=null">user_password = #{password},</if>
+            <if test="mail!=null">user_mail = #{mail},</if>
+            <if test="reward!=null">user_reward = #{reward},</if>
+            <if test="avatar!=null">user_avatar = #{avatar},</if>
+            update_time = NOW()
+        </set>
+        WHERE user_id = #{id}
+    </update>
+
+</mapper>
