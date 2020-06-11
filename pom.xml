@@ -19,6 +19,12 @@
         <module>mybatis-mapper</module>
         <module>aop-interceptor</module>
         <module>filter</module>
+        <module>api-example</module>
+        <module>log</module>
+        <module>util</module>
+        <module>ssm-api</module>
+        <module>springboot-websocket</module>
+
     </modules>
 
 </project>
